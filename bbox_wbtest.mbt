@@ -12,3 +12,7 @@ test "closed rectangles and validation" {
   }
   assert_true(invalid)
 }
+test "margin preserves small widths at large offsets" {
+  assert_eq(margin(BBox::new(0, 1.0e16, 1, 1.0e16)),1.0)
+}
+

@@ -77,7 +77,7 @@ fn area(b : BBox) -> Double {
 
 ///|
 fn margin(b : BBox) -> Double {
-  b.max_x - b.min_x + b.max_y - b.min_y
+  (b.max_x - b.min_x) + (b.max_y - b.min_y)
 }
 
 ///|
@@ -94,3 +94,4 @@ fn overlap(a : BBox, b : BBox) -> Double {
 
 fn dmin(a : Double, b : Double) -> Double { if a < b { a } else { b } }
 fn dmax(a : Double, b : Double) -> Double { if a > b { a } else { b } }
+
