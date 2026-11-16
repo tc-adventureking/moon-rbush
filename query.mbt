@@ -10,11 +10,10 @@ pub fn[T] RBush::all(self : RBush[T]) -> Array[T] {
   collect_all(self.root,out)
   out
 }
-// Returns visited node count as private instrumentation for pruning tests.
-fn[T] RBush::search_nodes(self : RBush[T], bbox : BBox) -> (Array[T], Int) {
+// Traverse overlapping branches; wholly contained branches use bulk collection.
+fn[T] RBush::search_nodes(self : RBush[T], bbox : BBox) -> Array[T] {
   let out = []
-  let mut visited = 1
-  if !bbox.intersects(self.root.bbox) { return (out, visited) }
+  if !bbox.intersects(self.root.bbox) { return out }
   let pending = [self.root]
   while pending.length() > 0 {
     let n = pending.unsafe_pop()
@@ -24,19 +23,18 @@ fn[T] RBush::search_nodes(self : RBush[T], bbox : BBox) -> (Array[T], Int) {
         match e {
           Item(t) => out.push(t)
           Branch(c) => {
-            visited += 1
             if bbox.contains(b) { collect_all(c,out) } else { pending.push(c) }
           }
         }
       }
     }
   }
-  (out,visited)
+  out
 }
 /// Return all items intersecting a valid closed query rectangle.
 pub fn[T] RBush::search(self : RBush[T], bbox : BBox) -> Array[T] raise RBushError {
   bbox.validate()
-  self.search_nodes(bbox).0
+  self.search_nodes(bbox)
 }
 /// Stop at the first intersection; traverses only overlapping branches.
 pub fn[T] RBush::collides(self : RBush[T], bbox : BBox) -> Bool raise RBushError {
@@ -54,3 +52,4 @@ pub fn[T] RBush::collides(self : RBush[T], bbox : BBox) -> Bool raise RBushError
   }
   false
 }
+

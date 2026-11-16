@@ -20,8 +20,8 @@ test "STLT batches with smaller equal and taller tree heights" {
     let (first,second) = pair
     let tree = RBush::new((b : BBox) => b,max_entries=4)
     let items = Array::makei(first+second,i => BBox::new((i%41).to_double(),(i%37).to_double(),(i%41).to_double()+0.5,(i%37).to_double()+0.5))
-    tree.load(items[:first].to_array())
-    tree.load(items[first:].to_array())
+    tree.load(items[:first].to_owned())
+    tree.load(items[first:].to_owned())
     assert_eq(check_node(tree,tree.root,true),first+second)
     for i = 0; i < 20; i = i + 1 {
       let q = BBox::new(i.to_double(),i.to_double(),i.to_double()+3,i.to_double()+5)
@@ -29,4 +29,5 @@ test "STLT batches with smaller equal and taller tree heights" {
     }
   }
 }
+
 

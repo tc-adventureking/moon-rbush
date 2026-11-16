@@ -95,3 +95,6 @@ fn overlap(a : BBox, b : BBox) -> Double {
 fn dmin(a : Double, b : Double) -> Double { if a < b { a } else { b } }
 fn dmax(a : Double, b : Double) -> Double { if a > b { a } else { b } }
 
+pub extend BBox with Eq::{equal, not_equal}
+pub extend BBox with @debug.Debug::{to_repr}
+pub extend RBushError with @debug.Debug::{to_repr}
