@@ -244,4 +244,3 @@ pub fn[T] RBush::insert(self : RBush[T], item : T) -> Unit raise RBushError {
   (self.to_bbox)(item).validate()
   self.insert_entry(Item(item), self.root.height - 1)
 }
-

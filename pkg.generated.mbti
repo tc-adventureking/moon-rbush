@@ -1,0 +1,52 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "tc-adventureking/rbush"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+}
+
+// Values
+
+// Errors
+#derive(@debug.Debug)
+pub suberror RBushError {
+  InvalidBBox
+  InvalidSnapshot(String)
+}
+pub fn RBushError::to_repr(Self) -> @debug.Repr
+
+// Types and methods
+#derive(Eq, @debug.Debug)
+pub(all) struct BBox {
+  min_x : Double
+  min_y : Double
+  max_x : Double
+  max_y : Double
+}
+pub fn BBox::contains(Self, Self) -> Bool
+pub fn BBox::equal(Self, Self) -> Bool
+pub fn BBox::intersects(Self, Self) -> Bool
+pub fn BBox::new(Double, Double, Double, Double) -> Self raise RBushError
+pub fn BBox::not_equal(Self, Self) -> Bool
+pub fn BBox::to_repr(Self) -> @debug.Repr
+
+pub struct RBush[T] {
+  // private fields
+}
+pub fn[T] RBush::all(Self[T]) -> Array[T]
+pub fn[T] RBush::clear(Self[T]) -> Unit
+pub fn[T] RBush::collides(Self[T], BBox) -> Bool raise RBushError
+pub fn[T] RBush::from_json(@json.Json, (T) -> BBox, (@json.Json) -> T raise, max_entries? : Int32, compare_min_x? : (T, T) -> Int32, compare_min_y? : (T, T) -> Int32) -> Self[T] raise
+pub fn[T] RBush::insert(Self[T], T) -> Unit raise RBushError
+pub fn[T] RBush::load(Self[T], Array[T]) -> Unit raise RBushError
+pub fn[T] RBush::new((T) -> BBox, max_entries? : Int32, compare_min_x? : (T, T) -> Int32, compare_min_y? : (T, T) -> Int32) -> Self[T]
+pub fn[T : Eq] RBush::remove(Self[T], T) -> Bool raise RBushError
+pub fn[T] RBush::remove_by(Self[T], T, (T, T) -> Bool) -> Bool raise RBushError
+pub fn[T] RBush::restore(Self[T], @json.Json, (@json.Json) -> T raise) -> Unit raise
+pub fn[T] RBush::search(Self[T], BBox) -> Array[T] raise RBushError
+pub fn[T] RBush::to_json(Self[T], (T) -> @json.Json) -> @json.Json
+
+// Type aliases
+
+// Traits

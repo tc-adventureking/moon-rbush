@@ -77,24 +77,38 @@ fn area(b : BBox) -> Double {
 
 ///|
 fn margin(b : BBox) -> Double {
-  (b.max_x - b.min_x) + (b.max_y - b.min_y)
+  b.max_x - b.min_x + (b.max_y - b.min_y)
 }
 
 ///|
 fn overlap(a : BBox, b : BBox) -> Double {
-  dmax(
-    0.0,
-    dmin(a.max_x, b.max_x) - dmax(a.min_x, b.min_x),
-  ) *
-  dmax(
-    0.0,
-    dmin(a.max_y, b.max_y) - dmax(a.min_y, b.min_y),
-  )
+  dmax(0.0, dmin(a.max_x, b.max_x) - dmax(a.min_x, b.min_x)) *
+  dmax(0.0, dmin(a.max_y, b.max_y) - dmax(a.min_y, b.min_y))
 }
 
-fn dmin(a : Double, b : Double) -> Double { if a < b { a } else { b } }
-fn dmax(a : Double, b : Double) -> Double { if a > b { a } else { b } }
+///|
+fn dmin(a : Double, b : Double) -> Double {
+  if a < b {
+    a
+  } else {
+    b
+  }
+}
 
+///|
+fn dmax(a : Double, b : Double) -> Double {
+  if a > b {
+    a
+  } else {
+    b
+  }
+}
+
+///|
 pub extend BBox with Eq::{equal, not_equal}
+
+///|
 pub extend BBox with @debug.Debug::{to_repr}
+
+///|
 pub extend RBushError with @debug.Debug::{to_repr}

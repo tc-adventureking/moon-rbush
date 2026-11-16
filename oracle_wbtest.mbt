@@ -70,6 +70,27 @@ test "independent RBush 4.0.1 oracle: 73 scenarios and exact tree topology" {
 }
 
 ///|
+fn sorted_boxes(items : Array[BBox]) -> Array[BBox] {
+  let sorted = items.copy()
+  sorted.sort_by((a, b) => {
+    for
+      pair in [
+        (a.min_x, b.min_x),
+        (a.min_y, b.min_y),
+        (a.max_x, b.max_x),
+        (a.max_y, b.max_y),
+      ] {
+      let c = coord_cmp(pair.0, pair.1)
+      if c != 0 {
+        return c
+      }
+    }
+    0
+  })
+  sorted
+}
+
+///|
 test "random mixed mutations maintain brute-force multiset and invariants" {
   let tree = RBush::new((b : BBox) => b, max_entries=5)
   let live : Array[BBox] = []
@@ -91,10 +112,10 @@ test "random mixed mutations maintain brute-force multiset and invariants" {
       live.push(b)
     }
     assert_eq(check_node(tree, tree.root, true), live.length())
+    assert_eq(sorted_boxes(tree.all()), sorted_boxes(live))
     let q = BBox::new(x, 0, x + 5, 100)
     let expected = live.filter(v => q.intersects(v))
-    assert_eq(tree.search(q).length(), expected.length())
+    assert_eq(sorted_boxes(tree.search(q)), sorted_boxes(expected))
     assert_eq(tree.collides(q), !expected.is_empty())
   }
 }
-

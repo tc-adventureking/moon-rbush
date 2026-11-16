@@ -1,0 +1,6 @@
+import {
+  "tc-adventureking/rbush",
+  "moonbitlang/core/json",
+}
+
+pkgtype(kind: "executable")

@@ -1,0 +1,5 @@
+import {
+  "tc-adventureking/rbush",
+}
+
+pkgtype(kind: "executable")
