@@ -17,7 +17,7 @@ moon run examples/game
 moon run examples/editor
 ```
 
-The map example loads POIs, queries a viewport, removes/adds POIs and verifies the updated viewport. The game example removes an old entity, queries its proposed position and inserts the moved entity. The editor example distinguishes intersection from containment, drags a shape, saves/parses JSON text, restores, queries and edits the reopened tree. Examples are separate packages using only the public API.
+The map example loads POIs, queries a viewport, removes/adds POIs and verifies the updated viewport. The game example removes the moving rectangle before each collision check, restores its old position on rejection, then accepts a free move. The editor example distinguishes intersection from containment, drags a shape, saves/parses JSON text, restores, queries and edits the reopened tree. Examples are separate packages using only the public API.
 
 For a separate application, place this checkout at `workspace/moon-rbush` and create `workspace/consumer` with the following four files. This uses the toolchain's [local workspace resolution](https://docs.moonbitlang.com/en/latest/toolchain/moon/module.html#dependency-management), without requiring a registry release.
 
@@ -107,7 +107,7 @@ moon test --target native   # C compiler required
 node scripts/generate_oracle.mjs --check  # Node >=20.11, internet required
 ```
 
-The checked-in oracle is reproducible from SHA256-verified official RBush commit `c3f6ad06f1e47ccec58998461f3383aa90066ecd` and quickselect 3.0.0 source. It covers 73 scenarios / 2392 operations, comparing query sets, collisions, final contents, and complete final tree topology. MoonBit tests also check exact node unions, height/capacity invariants, 1500 random mutations against a brute-force multiset, invalid-input atomicity, malformed snapshots, duplicate removal, comparator callbacks, boundary contact, extreme finite coordinates, and quickselect's sampled path. A counting `to_bbox` callback demonstrates selective-query pruning without a timing claim. Fixtures are checked in, so normal tests run offline; the generator is only needed to reproduce/check the independent oracle.
+The checked-in oracle is reproducible from SHA256-verified official RBush commit `c3f6ad06f1e47ccec58998461f3383aa90066ecd` and quickselect 3.0.0 source. It covers 81 scenarios / 2428 operations, comparing query sets, collisions, final contents, and complete final tree topology. MoonBit tests also check exact node unions, height/capacity invariants, 1500 random mutations against a brute-force multiset, invalid-input atomicity, malformed snapshots, duplicate removal, comparator callbacks, boundary contact, extreme finite coordinates, and quickselect's sampled path. A counting `to_bbox` callback demonstrates selective-query pruning without a timing claim. Fixtures are checked in, so normal tests run offline; the generator is only needed to reproduce/check the independent oracle.
 
 ## License
 

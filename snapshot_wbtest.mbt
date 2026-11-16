@@ -85,7 +85,7 @@ test "invalid hierarchy or payload leaves existing tree untouched" {
 }
 
 ///|
-test "restore rejects capacity, unions and malformed child heights" {
+test "restore rejects capacity, unions and malformed node fields" {
   let tree = RBush::new((b : BBox) => b, max_entries=4)
   tree.load(
     Array::makei(20, i => BBox::new(i.to_double(), 0, i.to_double() + 1, 1)),
@@ -140,4 +140,38 @@ test "signed zero bounds restore by numeric equality" {
   obj["minY"] = Json::number(0.0)
   tree.restore(Json::object(obj), decode_bbox)
   assert_eq(tree.search(BBox::new(0, 0, 0, 0)).length(), 1)
+}
+
+///|
+test "restore rejects actual child height mismatch and empty nonroot internal nodes atomically" {
+  let tree = RBush::new((b : BBox) => b, max_entries=4)
+  tree.load(
+    Array::makei(20, i => BBox::new(i.to_double(), 0, i.to_double() + 1, 1)),
+  )
+  let original = tree.to_json(encode_bbox)
+  assert_eq(tree.root.height, 3)
+  let leaf = RBush::new((b : BBox) => b, max_entries=4)
+  leaf.insert(BBox::new(0, 0, 1, 1))
+  for mode in ["child height mismatch", "invalid node occupancy"] {
+    let altered = object(@json.parse(original.stringify()))
+    let children = array(altered["children"])
+    if mode == "child height mismatch" {
+      // This child is valid by itself, but height 1 cannot belong to a height-3 parent.
+      children[0] = leaf.to_json(encode_bbox)
+    } else {
+      let child = object(children[0])
+      assert_eq(child["leaf"], Json::boolean(false))
+      assert_eq(child["height"], Json::number(2))
+      child["children"] = Json::array([])
+    }
+    let reached_expected_check = try {
+      tree.restore(Json::object(altered), decode_bbox)
+      false
+    } catch {
+      InvalidSnapshot(message) => message == mode
+      _ => false
+    }
+    assert_true(reached_expected_check)
+    assert_eq(tree.to_json(encode_bbox), original)
+  }
 }

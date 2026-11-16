@@ -5,7 +5,8 @@ struct Entity {
 }
 
 ///|
-fn main {
+fn scenario() -> Unit raise {
+  // Entities are rectangles: a bbox intersection is an actual blocked movement.
   let index = @rbush.RBush::new((e : Entity) => e.box)
   let player = {
     id: 1,
@@ -15,34 +16,47 @@ fn main {
     id: 2,
     box: { min_x: 3.0, min_y: 0.0, max_x: 4.0, max_y: 2.0, },
   }
-  index.load([player, wall]) catch {
-    _ => abort("valid boxes")
+  index.load([player, wall])
+  let blocked_position : @rbush.BBox = {
+    min_x: 2.5,
+    min_y: 0.0,
+    max_x: 3.5,
+    max_y: 1.0,
   }
-  let removed = index.remove_by(player, (a, b) => a.id == b.id) catch {
-    _ => abort("valid box")
+  // Remove the moving entity before testing a proposal, so it cannot collide with itself.
+  assert_true(index.remove_by(player, (a, b) => a.id == b.id))
+  let blocked = index.collides(blocked_position)
+  assert_true(blocked)
+  assert_eq(index.search(blocked_position).map(e => e.id), [2])
+  if blocked {
+    // Reject this proposal and put the old player back at its original position.
+    index.insert(player)
+    println("Blocked movement rejected")
+  } else {
+    index.insert({ id: 1, box: blocked_position, })
   }
-  assert_true(removed) catch {
-    _ => abort("expected player")
-  }
-  let moved = {
+  assert_eq(index.search(player.box).map(e => e.id), [1])
+  let accepted = {
     id: 1,
-    box: { min_x: 2.5, min_y: 0.0, max_x: 3.5, max_y: 1.0, },
+    box: { min_x: 1.5, min_y: 0.0, max_x: 2.5, max_y: 1.0, },
   }
-  let blocked = index.collides(moved.box) catch { _ => abort("valid box") }
-  println("Movement has collision candidates: \{blocked}")
-  let candidates = index.search(moved.box) catch { _ => abort("valid box") }
-  assert_eq(candidates.map(e => e.id), [2]) catch {
-    _ => abort("expected wall candidate")
+  assert_true(index.remove_by(player, (a, b) => a.id == b.id))
+  let free = !index.collides(accepted.box)
+  assert_true(free)
+  if free {
+    index.insert(accepted)
+  } else {
+    index.insert(player)
   }
-  for e in candidates {
-    println("Candidate entity: \{e.id}")
-  }
-  // Here the caller can run narrow-phase shape tests before accepting movement.
-  index.insert(moved) catch {
-    _ => abort("valid box")
-  }
-  assert_eq(index.all().length(), 2) catch {
-    _ => abort("expected two entities")
-  }
-  println("Indexed entities after movement: \{index.all().length()}")
+  assert_true(index.search(player.box).is_empty())
+  let actual = index.search(accepted.box)
+  assert_eq(actual.map(e => e.id), [1])
+  assert_eq(actual[0].box, accepted.box)
+  assert_eq(index.all().length(), 2)
+  println("Free movement accepted; old position is empty")
+}
+
+///|
+fn main {
+  try! scenario()
 }

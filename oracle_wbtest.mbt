@@ -27,7 +27,7 @@ fn ids(items : Array[Json]) -> Json {
 }
 
 ///|
-test "independent RBush 4.0.1 oracle: 73 scenarios and exact tree topology" {
+test "independent RBush 4.0.1 oracle: 81 scenarios and exact tree topology" {
   for case in oracle_cases() {
     let c = object(case)
     let capacity = number_field(c, "capacity").to_int()
