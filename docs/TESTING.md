@@ -6,7 +6,13 @@
 - wasm-gc、wasm、JavaScript、native 四后端均通过构建与测试；JavaScript 实测 Node.js 26.13.1，native 需要 C 工具链。
 - 20 项公开测试、三个完整消费者场景；独立工作区消费及公开错误处理已实测。
 
-[CI 配置](../.github/workflows/ci.yml)固定上述编译器/core 版本与 Node.js 版本，构建、测试并执行三个场景，另设上游 oracle 复现任务。配置中的工具安装 actions 固定到具体提交。
+[GitHub 源码仓库的 CI 配置](https://github.com/tc-adventureking/moon-rbush/blob/main/.github/workflows/ci.yml)固定上述编译器/core 版本与 Node.js 版本，构建、测试并执行三个场景，另设上游 oracle 复现任务。配置中的工具安装 actions 固定到具体提交。
+
+## 发布包与源码仓库
+
+注册表包由 `.moonignore` 精确白名单保留核心源码、模块/包配置、公共接口、README、使用文档、许可证和三个示例。必要测试、CI 和 [oracle 生成器](https://github.com/tc-adventureking/moon-rbush/blob/main/scripts/generate_oracle.mjs)仍公开保留在 [GitHub 源码仓库](https://github.com/tc-adventureking/moon-rbush)，不随使用包分发。
+
+以下构建、测试和 oracle 命令在完整源码检出中执行；安装和独立消费见[使用方法](USAGE.md#注册表安装)。发布前用 `moon package --list` 核对实际打包文件，避免内部项目状态、工作目录和缓存进入归档。
 
 ## 本地执行
 

@@ -1,44 +1,32 @@
 # 使用方法
 
-## 运行仓库示例
+## 注册表安装
 
-安装 [MoonBit 工具链](https://www.moonbitlang.com/download/) 后：
+在已有 MoonBit 项目根目录运行：
 
 ```bash
-git clone https://github.com/tc-adventureking/moon-rbush.git
-cd moon-rbush
-moon run examples/map
-moon run examples/game
-moon run examples/editor
+moon add tc-adventureking/rbush@0.1.0
 ```
 
-- [地图视口](../examples/map/main.mbt)：装载 POI、查询视口、删除和添加 POI，再验证更新后的可见集合。跨 180° 经线的视口须由调用方拆分查询。
-- [矩形实体移动](../examples/game/main.mbt)：每次提案前移除旧实体，避免与自身相撞；受阻时恢复旧位置，空闲时插入新位置，并验证最终位置。示例实体本身是矩形；其他形状仍需对候选做精确检测。
-- [编辑器框选](../examples/editor/main.mbt)：相交查询后筛选完全包含的形状，拖动形状，保存 JSON 文本，解析恢复后继续查询和修改。
+无需检出本仓库，也无需 `moon.work` 或本地依赖覆盖。
 
-这些是独立包，通过公开 API 使用库，无需地图服务、游戏引擎或图形界面。
+## 最小消费者
 
-## 独立项目接入
-
-当前使用源码工作区，不依赖 Mooncakes 发布。准备以下目录：
-
-```text
-workspace/
-  moon-rbush/       # 此仓库的源码检出
-  consumer/
-    moon.work
-    moon.mod
-    moon.pkg
-    main.mbt
-```
-
-`consumer/moon.work`：
+新建 `consumer` 目录，先写入 `consumer/moon.mod`：
 
 ```moonbit
-members = [".", "../moon-rbush"]
+name = "local/consumer"
+version = "0.1.0"
 ```
 
-`consumer/moon.mod`：
+然后在该目录添加依赖：
+
+```bash
+cd consumer
+moon add tc-adventureking/rbush@0.1.0
+```
+
+添加后 `moon.mod` 包含模块依赖：
 
 ```moonbit
 name = "local/consumer"
@@ -46,7 +34,7 @@ version = "0.1.0"
 import { "tc-adventureking/rbush@0.1.0" }
 ```
 
-`consumer/moon.pkg`：
+`consumer/moon.pkg` 声明使用的包：
 
 ```moonbit
 import { "tc-adventureking/rbush" }
@@ -66,13 +54,42 @@ fn main {
 }
 ```
 
-运行：
+在消费者目录运行 `moon run .`，输出 `1`。这里的 `try!` 仅用于固定合法输入；实际应用应处理无效包围盒和解码错误。完整契约见[兼容性说明](COMPATIBILITY.md)，公开签名见[生成接口](../pkg.generated.mbti)。
+
+## 运行仓库示例
 
 ```bash
-cd workspace/consumer
-moon run .
+git clone https://github.com/tc-adventureking/moon-rbush.git
+cd moon-rbush
+moon run examples/map
+moon run examples/game
+moon run examples/editor
 ```
 
-输出 `1`。按照 [MoonBit 本地工作区解析规则](https://docs.moonbitlang.com/en/latest/toolchain/moon/module.html#dependency-management)，成员从本地源码解析，声明的 `@0.1.0` 不会触发该依赖的注册表下载。
+- [地图视口](../examples/map/main.mbt)：装载 POI、查询视口、删除和添加 POI，再验证更新后的可见集合。跨 180° 经线的视口须由调用方拆分查询。
+- [矩形实体移动](../examples/game/main.mbt)：每次提案前移除旧实体，避免与自身相撞；受阻时恢复旧位置，空闲时插入新位置，并验证最终位置。示例实体本身是矩形；其他形状仍需对候选做精确检测。
+- [编辑器框选](../examples/editor/main.mbt)：相交查询后筛选完全包含的形状，拖动形状，保存 JSON 文本，解析恢复后继续查询和修改。
 
-这里的 `try!` 仅用于固定合法输入。实际应用应处理无效包围盒和解码错误；完整操作契约见[兼容性说明](COMPATIBILITY.md)，公开签名见[生成接口](../pkg.generated.mbti)。
+这些是独立包，通过公开 API 使用库，无需地图服务、游戏引擎或图形界面。
+
+## 可选：本地源码开发
+
+开发本库或联调修改时，可以使用[本地工作区](https://docs.moonbitlang.com/en/latest/toolchain/moon/module.html#dependency-management)。这不是注册表安装的前置条件。
+
+```text
+workspace/
+  moon-rbush/       # 此仓库的源码检出
+  consumer/
+    moon.work
+    moon.mod
+    moon.pkg
+    main.mbt
+```
+
+在上述消费者的 `moon.work` 中添加：
+
+```moonbit
+members = [".", "../moon-rbush"]
+```
+
+其他三个文件沿用最小消费者配置。工作区成员会从本地源码解析；验证已发布包时应移除这份 `moon.work`，使用正常注册表解析。

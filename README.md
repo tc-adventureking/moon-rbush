@@ -13,15 +13,13 @@
 
 ## 安装与使用
 
-安装 [MoonBit 工具链](https://www.moonbitlang.com/download/) 后，可直接运行源码：
+在 MoonBit 项目中安装：
 
 ```bash
-git clone https://github.com/tc-adventureking/moon-rbush.git
-cd moon-rbush
-moon run examples/map
+moon add tc-adventureking/rbush@0.1.0
 ```
 
-尚未发布 Mooncakes 包。独立项目通过本地 `moon.work` 接入，完整四文件配置见[使用方法](docs/USAGE.md#独立项目接入)。在消费者的 `moon.pkg` 中导入：
+在消费者的 `moon.pkg` 中导入：
 
 ```moonbit
 import { "tc-adventureking/rbush" }
@@ -46,7 +44,11 @@ fn main {
 
 ## 示例与测试
 
+安装 [MoonBit 工具链](https://www.moonbitlang.com/download/) 后，在源码仓库运行：
+
 ```bash
+git clone https://github.com/tc-adventureking/moon-rbush.git
+cd moon-rbush
 moon run examples/map
 moon run examples/game
 moon run examples/editor
