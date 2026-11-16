@@ -31,13 +31,19 @@ fn[T] RBush::build(self : RBush[T], items : Array[T], left : Int, right : Int, h
   n
 }
 /// Validate the whole batch before mutation; copies the input before OMT partitioning.
-/// On a nonempty tree this initial implementation inserts items individually.
+/// Nonempty trees use small-tree/large-tree (STLT) insertion.
 pub fn[T] RBush::load(self : RBush[T], items : Array[T]) -> Unit raise RBushError {
   for item in items { (self.to_bbox)(item).validate() }
   if items.is_empty() { return }
-  if self.root.children.is_empty() && items.length() >= self.min_entries {
-    self.root = self.build(items.copy(),0,items.length()-1,0)
-  } else {
+  if items.length() < self.min_entries {
     for item in items { self.insert_entry(Item(item),self.root.height-1) }
+    return
+  }
+  let mut built = self.build(items.copy(),0,items.length()-1,0)
+  if self.root.children.is_empty() { self.root = built }
+  else if self.root.height == built.height { self.split_root(self.root,built) }
+  else {
+    if self.root.height < built.height { let old = self.root; self.root = built; built = old }
+    self.insert_entry(Branch(built),self.root.height-built.height-1)
   }
 }
