@@ -17,6 +17,7 @@
 | `clear()` | `tree.clear() -> Unit` |
 | `toJSON()` | `tree.to_json(encode: (T)->Json) -> Json` |
 | `fromJSON(data)` | `tree.restore(json, decode)`；或 `RBush::from_json(json, to_bbox, decode, max_entries?=9, compare_min_x?, compare_min_y?)`，均可抛出 `Error` |
+| 普通矩形对象的 `minX`、`minY`、`maxX`、`maxY` | 仓库源码中可直接用 `BBox::from_json` 校验和读取，或用 `BBox::to_json` 导出 |
 
 完整签名见 [pkg.generated.mbti](../pkg.generated.mbti)。修改方法不返回可链式调用的树：插入、装载、清空和恢复返回 `Unit`，删除返回是否移除一项。
 
@@ -40,6 +41,8 @@
 
 装载使用 OMT 批量构建、STLT 非空树合并，小批量逐项插入；动态插入保留子树选择、R* 分裂和祖先包围盒调整。删除清理空分支，不要求保留节点继续满足分裂时的最小占用。
 
+批建树先限制分组大小和区间终点，再推进索引，避免 `Int32` 装载区间的中间算术溢出。quickselect 的采样窗口在缩窄成整数索引之前裁剪到当前区间。
+
 有限坐标仍可能使面积等启发式计算溢出。包围盒和查询可继续工作，但极值下分裂质量可能下降；不承诺普遍对数查询时间或固定速度优势。
 
 ## JSON 快照
@@ -50,6 +53,8 @@
 
 解码器签名为 `(Json) -> T raise Error`；纯函数或抛出具体错误类型的函数可包在 lambda 中传入。调用方负责 id 等载荷自身的 JSON 校验。解码器错误、无效载荷框或结构校验错误均不会替换原树。
 
+只索引普通矩形时，仓库源码可用 `BBox::from_json` 和 `BBox::to_json` 作为载荷编解码器。读入时检查四个字段及有限、有序坐标，无效记录报 `InvalidBBox`。额外字段由应用自己的编解码器负责。参见[源码接入示例](USAGE.md#源码版矩形-json-交换)。
+
 恢复先构建新拓扑，再替换根，检查：
 
 - 整数树高、叶子标志、子节点高度关系及叶子同高。
@@ -59,6 +64,6 @@
 
 删除后占用不足但非空的节点可恢复，不强制最小占用。符合以上更严格条件的上游快照可读入；MoonBit 快照的载荷格式若满足上游 `toBBox`，也可交给其 `fromJSON`。
 
-OMT 树高用整数幂计算，避免整幂边界的浮点对数舍入；分裂排序稳定，以对应现代 JavaScript。已测样本的完整树拓扑一致，包括容量及整幂边界；不承诺所有浮点输入、所有后端都与上游逐节点相同。
+OMT 树高用整数幂计算，分裂采用稳定排序。在 Node.js 24.22.1 的实测中，上游在容量 5、125 项时因浮点对数舍入多生成一层根。双方可交换该快照，查询结果集合一致。固定差分集记录逐节点对照的范围。[验证范围](TESTING.md)
 
-库不提供最近邻、三维、精确形状碰撞、经度环绕或并发修改；这些由调用方或其他实现处理。
+比较范围是 RBush v4.0.1 本体。其 README 的最近邻查询入口指向独立的 rbush-knn 包。[上游用法](https://github.com/mourner/rbush/tree/v4.0.1#k-nearest-neighbors)

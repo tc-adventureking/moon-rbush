@@ -26,9 +26,11 @@ pub(all) struct BBox {
 }
 pub fn BBox::contains(Self, Self) -> Bool
 pub fn BBox::equal(Self, Self) -> Bool
+pub fn BBox::from_json(@json.Json) -> Self raise RBushError
 pub fn BBox::intersects(Self, Self) -> Bool
 pub fn BBox::new(Double, Double, Double, Double) -> Self raise RBushError
 pub fn BBox::not_equal(Self, Self) -> Bool
+pub fn BBox::to_json(Self) -> @json.Json
 pub fn BBox::to_repr(Self) -> @debug.Repr
 
 pub struct RBush[T] {

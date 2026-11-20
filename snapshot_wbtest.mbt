@@ -1,25 +1,6 @@
 ///|
-fn encode_bbox(b : BBox) -> Json {
-  Json::object({
-    "minX": Json::number(b.min_x),
-    "minY": Json::number(b.min_y),
-    "maxX": Json::number(b.max_x),
-    "maxY": Json::number(b.max_y),
-  })
-}
-
-///|
 fn decode_bbox(j : Json) -> BBox raise {
-  let o = match j {
-    Object(o) => o
-    _ => raise InvalidSnapshot("payload object expected")
-  }
-  BBox::new(
-    number_field(o, "minX"),
-    number_field(o, "minY"),
-    number_field(o, "maxX"),
-    number_field(o, "maxY"),
-  )
+  BBox::from_json(j)
 }
 
 ///|
@@ -32,26 +13,26 @@ test "snapshots roundtrip raw topology including underfilled deletion nodes" {
   for i = 0; i < 180; i = i + 1 {
     let _ = tree.remove(items[i])
   }
-  let json = tree.to_json(encode_bbox)
+  let json = tree.to_json(BBox::to_json)
   let restored = RBush::from_json(
-    json,
+    @json.parse(json.stringify()),
     (b : BBox) => b,
     decode_bbox,
     max_entries=4,
   )
-  assert_eq(restored.to_json(encode_bbox), json)
+  assert_eq(restored.to_json(BBox::to_json), json)
   assert_eq(check_node(restored, restored.root, true), 20)
   tree.clear()
-  let empty = tree.to_json(encode_bbox)
-  tree.restore(empty, decode_bbox)
-  assert_eq(tree.to_json(encode_bbox), empty)
+  let empty = tree.to_json(BBox::to_json)
+  tree.restore(@json.parse(empty.stringify()), decode_bbox)
+  assert_eq(tree.to_json(BBox::to_json), empty)
 }
 
 ///|
 test "invalid hierarchy or payload leaves existing tree untouched" {
   let tree = RBush::new((b : BBox) => b, max_entries=4)
   tree.insert(BBox::new(0, 0, 1, 1))
-  let original = tree.to_json(encode_bbox)
+  let original = tree.to_json(BBox::to_json)
   for change in ["height", "leaf", "children", "minX"] {
     let altered = match @json.parse(original.stringify()) {
       Object(o) => o
@@ -71,7 +52,7 @@ test "invalid hierarchy or payload leaves existing tree untouched" {
         _ => true
       },
     )
-    assert_eq(tree.to_json(encode_bbox), original)
+    assert_eq(tree.to_json(BBox::to_json), original)
   }
   assert_true(
     try {
@@ -81,7 +62,7 @@ test "invalid hierarchy or payload leaves existing tree untouched" {
       _ => true
     },
   )
-  assert_eq(tree.to_json(encode_bbox), original)
+  assert_eq(tree.to_json(BBox::to_json), original)
 }
 
 ///|
@@ -90,7 +71,7 @@ test "restore rejects capacity, unions and malformed node fields" {
   tree.load(
     Array::makei(20, i => BBox::new(i.to_double(), 0, i.to_double() + 1, 1)),
   )
-  let original = tree.to_json(encode_bbox)
+  let original = tree.to_json(BBox::to_json)
   let rejects : Array[(String, Json)] = [
     ("height", Json::number(65)),
     ("height", Json::number(1.5)),
@@ -112,7 +93,7 @@ test "restore rejects capacity, unions and malformed node fields" {
         _ => true
       },
     )
-    assert_eq(tree.to_json(encode_bbox), original)
+    assert_eq(tree.to_json(BBox::to_json), original)
   }
   let too_small = RBush::new((b : BBox) => b, max_entries=4)
   let large = RBush::new((b : BBox) => b, max_entries=9)
@@ -121,7 +102,7 @@ test "restore rejects capacity, unions and malformed node fields" {
   )
   assert_true(
     try {
-      too_small.restore(large.to_json(encode_bbox), decode_bbox)
+      too_small.restore(large.to_json(BBox::to_json), decode_bbox)
       false
     } catch {
       _ => true
@@ -134,7 +115,7 @@ test "restore rejects capacity, unions and malformed node fields" {
 test "signed zero bounds restore by numeric equality" {
   let tree = RBush::new((b : BBox) => b)
   tree.insert(BBox::new(-0.0, -0.0, 0.0, 0.0))
-  let saved = tree.to_json(encode_bbox)
+  let saved = tree.to_json(BBox::to_json)
   let obj = object(saved)
   obj["minX"] = Json::number(0.0)
   obj["minY"] = Json::number(0.0)
@@ -148,7 +129,7 @@ test "restore rejects actual child height mismatch and empty nonroot internal no
   tree.load(
     Array::makei(20, i => BBox::new(i.to_double(), 0, i.to_double() + 1, 1)),
   )
-  let original = tree.to_json(encode_bbox)
+  let original = tree.to_json(BBox::to_json)
   assert_eq(tree.root.height, 3)
   let leaf = RBush::new((b : BBox) => b, max_entries=4)
   leaf.insert(BBox::new(0, 0, 1, 1))
@@ -157,7 +138,7 @@ test "restore rejects actual child height mismatch and empty nonroot internal no
     let children = array(altered["children"])
     if mode == "child height mismatch" {
       // This child is valid by itself, but height 1 cannot belong to a height-3 parent.
-      children[0] = leaf.to_json(encode_bbox)
+      children[0] = leaf.to_json(BBox::to_json)
     } else {
       let child = object(children[0])
       assert_eq(child["leaf"], Json::boolean(false))
@@ -172,6 +153,6 @@ test "restore rejects actual child height mismatch and empty nonroot internal no
       _ => false
     }
     assert_true(reached_expected_check)
-    assert_eq(tree.to_json(encode_bbox), original)
+    assert_eq(tree.to_json(BBox::to_json), original)
   }
 }

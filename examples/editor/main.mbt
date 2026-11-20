@@ -42,15 +42,7 @@ fn decode(j : Json) -> Shape raise {
     id != id.floor() {
     raise InvalidPayload
   }
-  {
-    id: id.to_int(),
-    box: {
-      min_x: number(o, "minX"),
-      min_y: number(o, "minY"),
-      max_x: number(o, "maxX"),
-      max_y: number(o, "maxY"),
-    },
-  }
+  { id: id.to_int(), box: @rbush.BBox::from_json(j), }
 }
 
 ///|

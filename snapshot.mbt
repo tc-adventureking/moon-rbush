@@ -8,6 +8,17 @@ fn json_number(v : Double) -> Json {
 }
 
 ///|
+/// Encode a valid rectangle with RBush's minX/minY/maxX/maxY property names.
+pub fn BBox::to_json(self : BBox) -> Json {
+  Json::object({
+    "minX": Json::number(self.min_x),
+    "minY": Json::number(self.min_y),
+    "maxX": Json::number(self.max_x),
+    "maxY": Json::number(self.max_y),
+  })
+}
+
+///|
 fn[T] encode_node(n : Node[T], encode : (T) -> Json) -> Json {
   let children = n.children.map(e => {
     match e {
@@ -53,6 +64,26 @@ fn number_field(
       v
     }
     _ => raise InvalidSnapshot("expected number: " + key)
+  }
+}
+
+///|
+fn decode_bbox_fields(obj : Map[String, Json]) -> BBox raise RBushError {
+  BBox::new(
+    number_field(obj, "minX"),
+    number_field(obj, "minY"),
+    number_field(obj, "maxX"),
+    number_field(obj, "maxY"),
+  )
+}
+
+///|
+/// Read and validate the RBush rectangle fields in a JSON object.
+/// Invalid records raise InvalidBBox. Extra payload fields are ignored.
+pub fn BBox::from_json(value : Json) -> BBox raise RBushError {
+  match value {
+    Object(obj) => decode_bbox_fields(obj) catch { _ => raise InvalidBBox }
+    _ => raise InvalidBBox
   }
 }
 
@@ -103,13 +134,7 @@ fn[T] RBush::decode_node(
     }
     return node([], 1, true)
   }
-  let bbox = {
-    min_x: number_field(obj, "minX"),
-    min_y: number_field(obj, "minY"),
-    max_x: number_field(obj, "maxX"),
-    max_y: number_field(obj, "maxY"),
-  }
-  bbox.validate()
+  let bbox = decode_bbox_fields(obj)
   let n = node([], height, leaf)
   for value in values {
     if leaf {

@@ -93,3 +93,21 @@ members = [".", "../moon-rbush"]
 ```
 
 其他三个文件沿用最小消费者配置。工作区成员会从本地源码解析；验证已发布包时应移除这份 `moon.work`，使用正常注册表解析。
+
+## 源码版矩形 JSON 交换
+
+接入仓库源码后，在消费包的 `moon.pkg` 中同时导入 `moonbitlang/core/json`。以下函数读取只有矩形条目的 RBush 快照，再导出同样的原始根节点格式。`capacity` 传入原树容量。
+
+```moonbit
+fn reexport_snapshot(text : String, capacity : Int32) -> String raise {
+  let tree = @rbush.RBush::from_json(
+    @json.parse(text),
+    (b : @rbush.BBox) => b,
+    j => @rbush.BBox::from_json(j),
+    max_entries=capacity,
+  )
+  tree.to_json(b => b.to_json()).stringify()
+}
+```
+
+矩形编解码使用 `minX`、`minY`、`maxX`、`maxY`。若载荷还包含 ID 或样式等字段，可以使用自己的类型和编解码器保留这些数据。[编辑器示例](../examples/editor/main.mbt)
