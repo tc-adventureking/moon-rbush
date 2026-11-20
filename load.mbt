@@ -1,12 +1,22 @@
 ///|
+fn tile_widths(count : Int32, fanout : Int32) -> (Int32, Int32) {
+  let tile_size = 1 + (count - 1) / fanout
+  let tiles_per_strip = fanout.to_double().sqrt().ceil().to_int64()
+  let strip_size = (tile_size.to_int64() * tiles_per_strip).min(
+    count.to_int64(),
+  )
+  (strip_size.to_int(), tile_size)
+}
+
+///|
 fn[T] RBush::build(
   self : RBush[T],
   items : Array[T],
   left : Int32,
-  right : Int32,
+  end : Int32,
   height0 : Int32,
 ) -> Node[T] {
-  let count = right - left + 1
+  let count = end - left
   if count <= self.max_entries {
     let n = node(Array::makei(count, i => Item(items[left + i])), 1, true)
     self.calc_bbox(n)
@@ -26,16 +36,18 @@ fn[T] RBush::build(
     m = ((count.to_int64() + lower - 1) / lower).to_int()
   }
   let n = node([], height, false)
-  let n2 = (count + m - 1) / m
-  let n1 = n2 * m.to_double().sqrt().ceil().to_int()
-  multi_select(items, left, right, n1, self.compare_x)
-  for i = left; i <= right; i = i + n1 {
-    let r2 = if i + n1 - 1 < right { i + n1 - 1 } else { right }
-    multi_select(items, i, r2, n2, self.compare_y)
-    for j = i; j <= r2; j = j + n2 {
-      let r3 = if j + n2 - 1 < r2 { j + n2 - 1 } else { r2 }
-      n.children.push(Branch(self.build(items, j, r3, height - 1)))
+  let (strip_size, tile_size) = tile_widths(count, m)
+  multi_select(items, left, end - 1, strip_size, self.compare_x)
+  // Bound each advance by the remaining range before adding it to an index.
+  for i = left; i < end; {
+    let strip_end = i + strip_size.min(end - i)
+    multi_select(items, i, strip_end - 1, tile_size, self.compare_y)
+    for j = i; j < strip_end; {
+      let tile_end = j + tile_size.min(strip_end - j)
+      n.children.push(Branch(self.build(items, j, tile_end, height - 1)))
+      continue tile_end
     }
+    continue strip_end
   }
   self.calc_bbox(n)
   n
@@ -60,7 +72,7 @@ pub fn[T] RBush::load(
     }
     return
   }
-  let mut built = self.build(items.copy(), 0, items.length() - 1, 0)
+  let mut built = self.build(items.copy(), 0, items.length(), 0)
   if self.root.children.is_empty() {
     self.root = built
   } else if self.root.height == built.height {

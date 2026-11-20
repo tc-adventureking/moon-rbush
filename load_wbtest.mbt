@@ -39,6 +39,15 @@ test "OMT height boundaries, ties, and atomic validation" {
 }
 
 ///|
+test "OMT tile sizes fit the Int32 index range" {
+  // Fanout 2 can occur at the root with a capacity of 4. Both the old
+  // numerator and the unclamped strip width overflow at this count.
+  assert_eq(tile_widths(2147483647, 2), (2147483647, 1073741824))
+  assert_eq(tile_widths(2147483647, 4), (1073741824, 536870912))
+  assert_eq(tile_widths(101, 6), (51, 17))
+}
+
+///|
 test "STLT batches with smaller equal and taller tree heights" {
   for
     pair in [

@@ -26,23 +26,16 @@ fn[T] quickselect(
       let sd = 0.5 *
         (z * s * (n - s) / n).sqrt() *
         (if m - n / 2.0 < 0.0 { -1.0 } else { 1.0 })
-      let nl = @double.floor(k.to_double() - m * s / n + sd).to_int()
-      let nr = @double.floor(k.to_double() + (n - m) * s / n + sd).to_int()
-      quickselect(
-        a,
-        k,
-        if nl > left {
-          nl
-        } else {
-          left
-        },
-        if nr < right {
-          nr
-        } else {
-          right
-        },
-        cmp,
+      // The floating sample may extend past an Int32 index before clamping.
+      let nl = dmax(
+        left.to_double(),
+        @double.floor(k.to_double() - m * s / n + sd),
       )
+      let nr = dmin(
+        right.to_double(),
+        @double.floor(k.to_double() + (n - m) * s / n + sd),
+      )
+      quickselect(a, k, nl.to_int(), nr.to_int(), cmp)
     }
     let t = a[k]
     let mut i = left
